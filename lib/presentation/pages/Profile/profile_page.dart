@@ -2,20 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zygo/presentation/pages/Profile/profile_cubit/profile_cubit.dart';
 import 'package:zygo/presentation/pages/Profile/profile_cubit/profile_state.dart';
+import 'package:zygo/service_locator.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<ProfileCubit>()..getProfile(),
+        ),
+      ],
+      child: const _ProfileView(),
+    );
+  }
 }
 
-class _ProfilePageState extends State<ProfilePage> {
-  @override
-  void initState() {
-    context.read<ProfileCubit>().getProfile();
-    super.initState();
-  }
+class _ProfileView extends StatelessWidget {
+  const _ProfileView();
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +32,11 @@ class _ProfilePageState extends State<ProfilePage> {
             return Center(child: CircularProgressIndicator());
           }
 
-          if (state is ProfileFailure){
-            return Center(child: Text(state.error),);
+          if (state is ProfileFailure) {
+            return Center(child: Text(state.error));
           }
 
-          if (state is ProfileSuccess){
-
+          if (state is ProfileSuccess) {
             final user = state.user;
 
             return Column(
@@ -39,7 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(user.email),
                 Text(user.name),
-                Text(user.user_id)
+                Text(user.user_id),
               ],
             );
           }
