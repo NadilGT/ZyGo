@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zygo/presentation/pages/log_in/log_in.dart';
+import 'package:zygo/presentation/pages/splash/splash_page.dart';
 import 'package:zygo/service_locator.dart';
 
 void main() async {
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),
-        home: LogIn(),
+        home: SplashPage(),
     );
   }
 }

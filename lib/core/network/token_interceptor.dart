@@ -1,29 +1,42 @@
 import 'package:dio/dio.dart';
-import 'package:zygo/core/storage/shared_pref_manager.dart';
+
+import '../storage/token_storage.dart';
 
 class TokenInterceptor extends Interceptor {
-  final SharedPrefManager sharedPrefManager;
+  final Dio dio;
 
-  TokenInterceptor({required this.sharedPrefManager});
+  TokenInterceptor(this.dio);
 
   @override
   void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    final token = await sharedPrefManager.getToken();
-    if (token != null && token.isNotEmpty) {
+      RequestOptions options, RequestInterceptorHandler handler) async {
+    final token = await TokenStorage.getToken();
+
+    if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
+
     handler.next(options);
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 unauthorized errors if needed
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      // Token expired or invalid - handle logout or refresh
+      final success = await TokenStorage.refreshToken();
+
+      if (success) {
+        final newToken = await TokenStorage.getToken();
+
+        final request = err.requestOptions;
+
+        request.headers['Authorization'] = 'Bearer $newToken';
+
+        final response = await dio.fetch(request);
+
+        return handler.resolve(response);
+      }
     }
+
     handler.next(err);
   }
 }
