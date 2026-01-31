@@ -14,7 +14,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [Homepage(), RidePage(), ProfilePage()];
+  final List<Widget> _pages = [HomeView(), RidePage(), ProfilePage()];
 
   @override
   Widget build(BuildContext context) {

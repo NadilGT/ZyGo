@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zygo/core/theme/app_theme.dart';
 import 'package:zygo/presentation/pages/splash/splash_page.dart';
 import 'package:zygo/service_locator.dart';
 
@@ -16,9 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         title: 'Zygo',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        ),
+        theme: AppTheme.lightTheme,
         home: SplashPage(),
     );
   }
