@@ -20,6 +20,8 @@ class _MapViewState extends State<MapView> {
   List<Map<String, dynamic>> searchResults = [];
   LatLng? destination;
   List<LatLng> routePoints = [];
+  String? realDuration;
+  String? realDistance;
 
   Future<void> getRoute(LatLng start, LatLng end) async {
     final url = Uri.parse(
@@ -31,12 +33,20 @@ class _MapViewState extends State<MapView> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final coords = data['routes'][0]['geometry']['coordinates'] as List;
+      final duration = data['routes'][0]['duration'] as num; // in seconds
+      final distance = data['routes'][0]['distance'] as num; // in meters
 
       // Convert to LatLng
       final points = coords.map((c) => LatLng(c[1], c[0])).toList();
 
+      // Format distance and duration for display
+      final distanceKm = (distance / 1000).toStringAsFixed(1);
+      final durationMin = (duration / 60).ceil();
+
       setState(() {
         routePoints = points;
+        realDistance = '$distanceKm km';
+        realDuration = '$durationMin min';
       });
 
       // Optionally move map to start of route
@@ -127,17 +137,19 @@ class _MapViewState extends State<MapView> {
           FlutterMap(
             mapController: mapController,
             options: MapOptions(
-              center: userLocation ?? LatLng(0, 0),
+              initialCenter: userLocation ?? LatLng(0, 0),
               initialZoom: 15,
             ),
             children: [
               TileLayer(
                 urlTemplate:
-                    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                    "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
                 subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: "com.example.app",
+                userAgentPackageName:
+                    "com.zygo.app", // Use your actual package name here
+                retinaMode: true,
               ),
-              
+
               if (routePoints.isNotEmpty)
                 PolylineLayer(
                   polylines: [
@@ -239,6 +251,26 @@ class _MapViewState extends State<MapView> {
                     ),
                   ),
               ],
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 10,
+            right: 10,
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+                width: double.infinity,
+                decoration: BoxDecoration(color: Colors.grey),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(realDistance.toString()),
+                    Text(realDuration.toString()),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
