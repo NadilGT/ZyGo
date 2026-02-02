@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zygo/data/models/service_model/service_model.dart';
 import 'package:zygo/presentation/pages/Profile/profile_cubit/profile_cubit.dart';
 import 'package:zygo/presentation/pages/Profile/profile_cubit/profile_state.dart';
+import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_cubit.dart';
 import 'package:zygo/presentation/widgets/service_card.dart';
 import 'package:zygo/service_locator.dart';
 
@@ -158,7 +159,12 @@ class Homepage extends StatelessWidget {
       case 'Rides':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => MapView()),
+          MaterialPageRoute(
+            builder: (context) => BlocProvider(
+              create: (context) => PricingCubit(),
+              child: MapView(),
+            ),
+          ),
         );
         break;
       case 'Food':

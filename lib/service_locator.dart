@@ -4,11 +4,15 @@ import 'package:zygo/core/network/dio_client.dart';
 import 'package:zygo/core/network/token_interceptor.dart';
 import 'package:zygo/core/storage/token_storage.dart';
 import 'package:zygo/data/repository_impl/auth_repository_impl/auth_repository_impl.dart';
+import 'package:zygo/data/repository_impl/pricing_repository_impl/pricing_repository_impl.dart';
 import 'package:zygo/data/repository_impl/profile_repository_impl/profile_repository_impl.dart';
+import 'package:zygo/domain/repositories/pricing_repository/pricing_repository.dart';
 import 'package:zygo/domain/repositories/profile_repository/profile_repository.dart';
 import 'package:zygo/domain/usecases/login_usecase/login_use_case.dart';
+import 'package:zygo/domain/usecases/pricing_use_case/pricing_use_case.dart';
 import 'package:zygo/domain/usecases/profile_usecase/profile_usecase.dart';
 import 'package:zygo/presentation/pages/Profile/profile_cubit/profile_cubit.dart';
+import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_cubit.dart';
 import 'domain/repositories/auth_repository/auth_repository.dart';
 import 'domain/service/api_service.dart';
 
@@ -48,9 +52,12 @@ Future<void> initilizeDependencies() async {
   sl.registerSingleton<LoginUseCase>(LoginUseCase());
   sl.registerSingleton<ProfileRepository>(ProfileRepositoryImpl());
   sl.registerSingleton<ProfileUsecase>(ProfileUsecase());
+  sl.registerSingleton<PricingUseCase>(PricingUseCase());
+  sl.registerSingleton<PricingRepository>(PricingRepositoryImpl());
 
   // ---------------------------
   // Cubits
   // ---------------------------
   sl.registerFactory<ProfileCubit>(() => ProfileCubit());
+  sl.registerFactory<PricingCubit>(() => PricingCubit());
 }

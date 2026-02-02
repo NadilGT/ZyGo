@@ -1,10 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
+import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_cubit.dart';
+import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_state.dart';
 
 class MapView extends StatefulWidget {
   const MapView({super.key});
@@ -41,13 +44,20 @@ class _MapViewState extends State<MapView> {
 
       // Format distance and duration for display
       final distanceKm = (distance / 1000).toStringAsFixed(1);
-      final durationMin = (duration / 60).ceil();
+      final durationMin = (duration / 60).ceil().toString();
 
       setState(() {
         routePoints = points;
         realDistance = '$distanceKm km';
         realDuration = '$durationMin min';
       });
+
+      // ignore: use_build_context_synchronously
+      context.read<PricingCubit>().getPrice(
+        vehicle: 'tuk',
+        distance: distanceKm,
+        duration: durationMin,
+      );
 
       // Optionally move map to start of route
       if (points.isNotEmpty) mapController.move(points[0], 13);
@@ -257,20 +267,83 @@ class _MapViewState extends State<MapView> {
             bottom: 0,
             left: 10,
             right: 10,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-                width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(realDistance.toString()),
-                    Text(realDuration.toString()),
-                  ],
+            child: BlocBuilder<PricingCubit, PricingState>(
+              builder: (context, state) {
+                if (state is PricingInLoading) {
+                  return const CircularProgressIndicator();
+                }
+                if (state is PricingSuccess) {
+                  final priceData = state.data;
+                  return _buildPriceBottomCard(priceData);
+                }
+                if (state is PricingFailure) {
+                  return Container(
+                    color: Colors.redAccent,
+                    padding: const EdgeInsets.all(10),
+                    child: Text(
+                      state.error,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceBottomCard(dynamic price) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    price.vehicleType.toUpperCase(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Text("$realDistance • $realDuration"),
+                ],
+              ),
+              Text(
+                "${price.currency} ${price.totalFare.toStringAsFixed(0)}",
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                /* Confirm Booking Logic */
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("CONFIRM ZYGO RIDE"),
             ),
           ),
         ],
