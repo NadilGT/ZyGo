@@ -10,6 +10,8 @@ import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_cubit.dart';
 import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_state.dart';
 import 'package:zygo/services/websocket_service.dart';
 
+import '../../widgets/Animated_driver_marker.dart';
+
 class MapView extends StatefulWidget {
   const MapView({super.key});
 
@@ -27,7 +29,7 @@ class _MapViewState extends State<MapView> {
   String? realDuration;
   String? realDistance;
   late final WebSocketService _ws;
-  final Map<String, LatLng> _driverLocations = {};
+  final Map<String, LocationUpdate> _driverLocations = {};
 
   Future<void> getRoute(LatLng start, LatLng end) async {
     final url = Uri.parse(
@@ -150,17 +152,17 @@ class _MapViewState extends State<MapView> {
 
   Future<void> _initWebSocket() async {
     _ws = WebSocketService(
-      baseUrl: 'ws://10.72.25.75:3000', // Use your server IP for physical device
+      baseUrl:
+          'ws://10.72.25.75:3000', // Use your server IP for physical device
     );
 
     // Listen for location updates
     _ws.locationStream.listen((update) {
-      print('📍 Location update received: ${update.driverId} - ${update.latitude}, ${update.longitude}');
+      print(
+        '📍 Location update received: ${update.driverId} - ${update.latitude}, ${update.longitude}',
+      );
       setState(() {
-        _driverLocations[update.driverId] = LatLng(
-          update.latitude,
-          update.longitude,
-        );
+        _driverLocations[update.driverId] = update;
       });
     });
 
@@ -237,11 +239,12 @@ class _MapViewState extends State<MapView> {
                       (e) => Marker(
                         width: 50,
                         height: 50,
-                        point: e.value,
-                        child: Icon(
-                          Icons.local_taxi,
-                          size: 40,
-                          color: Colors.amber,
+                        point: LatLng(e.value.latitude, e.value.longitude),
+                        child: AnimatedDriverMarker(
+                          point: LatLng(e.value.latitude, e.value.longitude),
+                          heading: e
+                              .value
+                              .heading, // The car will now face the right way!
                         ),
                       ),
                     ),
