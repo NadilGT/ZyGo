@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_cubit.dart';
 import 'package:zygo/presentation/pages/map/pricing_cubit/pricing_state.dart';
+import 'package:zygo/services/websocket_service.dart';
 
 class MapView extends StatefulWidget {
   const MapView({super.key});
@@ -25,6 +26,8 @@ class _MapViewState extends State<MapView> {
   List<LatLng> routePoints = [];
   String? realDuration;
   String? realDistance;
+  late final WebSocketService _ws;
+  final Map<String, LatLng> _driverLocations = {};
 
   Future<void> getRoute(LatLng start, LatLng end) async {
     final url = Uri.parse(
@@ -133,9 +136,44 @@ class _MapViewState extends State<MapView> {
   }
 
   @override
+  void dispose() {
+    _ws.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
-    _determinePosition();
     super.initState();
+    _determinePosition();
+    _initWebSocket();
+  }
+
+  Future<void> _initWebSocket() async {
+    _ws = WebSocketService(
+      baseUrl: 'ws://10.72.25.75:3000', // Use your server IP for physical device
+    );
+
+    // Listen for location updates
+    _ws.locationStream.listen((update) {
+      print('📍 Location update received: ${update.driverId} - ${update.latitude}, ${update.longitude}');
+      setState(() {
+        _driverLocations[update.driverId] = LatLng(
+          update.latitude,
+          update.longitude,
+        );
+      });
+    });
+
+    // Listen for connection status - subscribe AFTER connected
+    _ws.connectionStream.listen((connected) {
+      print('🔌 WebSocket connected: $connected');
+      if (connected) {
+        _ws.subscribeToDriver("driver123");
+      }
+    });
+
+    // Connect as rider (this must happen BEFORE subscribing)
+    await _ws.connectAsRider("rider456");
   }
 
   @override
@@ -195,6 +233,18 @@ class _MapViewState extends State<MapView> {
                           size: 40,
                         ),
                       ),
+                    ..._driverLocations.entries.map(
+                      (e) => Marker(
+                        width: 50,
+                        height: 50,
+                        point: e.value,
+                        child: Icon(
+                          Icons.local_taxi,
+                          size: 40,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
             ],
